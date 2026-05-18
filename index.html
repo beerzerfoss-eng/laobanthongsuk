@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ຫວຍລາວ · ผลหวยลาว Real-Time</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+
+:root {
+  --gold: #C8922A;
+  --gold-light: #F0C866;
+  --gold-pale: #FDF3DC;
+  --gold-dark: #7A5010;
+  --red: #9B1D1D;
+  --red-pale: #FDF0F0;
+  --cream: #FBF6ED;
+  --text: #2C1F08;
+  --muted: #7A6840;
+  --border: rgba(200,146,42,0.25);
+  --radius: 14px;
+  --radius-lg: 22px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sarabun', Arial, sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.wrapper { max-width: 900px; margin: 0 auto; padding: 0 16px 60px; }
+
+/* Header */
+header { text-align: center; padding: 40px 0 28px; }
+.ornament { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 18px; }
+.ornament-line { flex: 1; max-width: 100px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.ornament-dot { width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg); }
+.flag { font-size: 44px; display: block; margin-bottom: 10px; }
+h1 { font-size: clamp(22px, 5vw, 36px); font-weight: 700; color: var(--gold-dark); line-height: 1.2; }
+.subtitle { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.live-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 14px; border-radius: 30px; margin-top: 12px; }
+.live-dot { width: 7px; height: 7px; background: #ff8080; border-radius: 50%; animation: blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Tabs */
+.tabs { display: flex; gap: 8px; background: rgba(200,146,42,0.08); border: 1px solid var(--border); border-radius: 50px; padding: 5px; margin: 24px 0; overflow-x: auto; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 1; min-width: 130px; padding: 10px 18px; border: none; background: transparent; border-radius: 40px; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .2s; white-space: nowrap; }
+.tab.active { background: var(--gold); color: #fff; }
+.tab:hover:not(.active) { background: rgba(200,146,42,0.12); }
+
+/* Countdown */
+.countdown { background: var(--red-pale); border: 1px solid rgba(155,29,29,0.15); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.cd-label { font-size: 13px; color: var(--red); font-weight: 600; }
+.cd-timer { display: flex; align-items: center; gap: 10px; }
+.cd-unit { text-align: center; }
+.cd-num { font-size: 26px; font-weight: 700; color: var(--red); display: block; font-variant-numeric: tabular-nums; }
+.cd-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+.cd-sep { font-size: 22px; font-weight: 700; color: var(--red); opacity: .4; padding-bottom: 12px; }
+
+/* Card */
+.card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--red), var(--gold), var(--red)); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.draw-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.draw-date { font-size: 20px; font-weight: 700; color: var(--gold-dark); margin-top: 4px; }
+.draw-next { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.btn-refresh { display: flex; align-items: center; gap: 7px; background: var(--gold-pale); border: 1px solid var(--border); border-radius: 50px; padding: 8px 18px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--gold-dark); cursor: pointer; transition: all .2s; }
+.btn-refresh:hover { background: var(--gold); color: #fff; }
+.spin { display: inline-block; transition: transform .4s; }
+.btn-refresh:hover .spin { transform: rotate(180deg); }
+
+/* Numbers grid */
+.numbers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+@media(max-width:500px){ .numbers-grid { grid-template-columns: 1fr; } }
+.num-block { background: var(--gold-pale); border: 1px solid rgba(200,146,42,0.2); border-radius: var(--radius); padding: 18px; text-align: center; }
+.num-block.featured { grid-column: 1 / -1; background: var(--gold-dark); border-color: transparent; padding: 24px; }
+.num-label { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+.num-block.featured .num-label { color: rgba(255,255,255,.65); }
+.num-digits { font-size: clamp(32px,7vw,50px); font-weight: 700; color: var(--gold-dark); letter-spacing: 5px; line-height: 1; font-variant-numeric: tabular-nums; }
+.num-block.featured .num-digits { color: var(--gold-light); font-size: clamp(28px,6vw,44px); }
+.animal-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.2); }
+.animal-emoji { font-size: 30px; }
+.animal-name { font-size: 15px; font-weight: 600; color: rgba(255,255,255,.9); }
+
+/* Prize list */
+.prize-list { border-top: 1px solid var(--border); padding-top: 4px; }
+.prize-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.prize-row:last-child { border-bottom: none; }
+.prize-rank { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-pale); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gold-dark); flex-shrink: 0; }
+.prize-rank.top { background: var(--gold); border-color: var(--gold); color: #fff; }
+.prize-name { flex: 1; font-size: 14px; font-weight: 500; }
+.prize-num { font-size: 15px; font-weight: 700; color: var(--gold-dark); letter-spacing: 3px; }
+
+/* Check */
+.check-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.check-input { flex: 1; min-width: 140px; padding: 12px 18px; border: 1.5px solid var(--border); border-radius: 50px; font-family: inherit; font-size: 18px; font-weight: 700; color: var(--text); background: var(--cream); outline: none; letter-spacing: 4px; }
+.check-input:focus { border-color: var(--gold); background: #fff; }
+.check-btn { padding: 12px 26px; background: var(--gold); color: #fff; border: none; border-radius: 50px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.check-btn:hover { background: var(--gold-dark); }
+.check-result { margin-top: 14px; padding: 12px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 600; display: none; }
+.win { background: #e6f9e8; color: #1a6b2a; border: 1px solid #7acc85; display: block; }
+.lose { background: var(--red-pale); color: var(--red); border: 1px solid rgba(155,29,29,.2); display: block; }
+
+/* History */
+.section-title { font-size: 18px; font-weight: 700; color: var(--gold-dark); margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.history-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 12px; margin-bottom: 32px; }
+.hist-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; text-decoration: none; display: block; transition: all .2s; }
+.hist-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.hist-date { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.hist-num { font-size: 26px; font-weight: 700; color: var(--gold-dark); letter-spacing: 3px; }
+.hist-animal { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* Source link */
+.source-link { display: inline-flex; align-items: center; gap: 6px; background: var(--gold-pale); border: 1px solid var(--border); border-radius: 30px; padding: 5px 14px; font-size: 12px; color: var(--gold-dark); font-weight: 600; text-decoration: none; }
+.source-link:hover { background: var(--gold); color: #fff; }
+
+/* Loading / Error */
+.loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px; color: var(--muted); }
+.spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box { text-align: center; padding: 28px; color: var(--red); font-size: 14px; line-height: 1.9; }
+.btn-goto { display: inline-block; margin-top: 14px; padding: 10px 24px; background: var(--gold); color: #fff; border-radius: 30px; font-weight: 700; text-decoration: none; font-size: 14px; }
+
+footer { text-align: center; padding: 28px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); line-height: 1.9; }
+footer a { color: var(--gold-dark); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<header>
+  <div class="ornament">
+    <div class="ornament-line"></div><div class="ornament-dot"></div><div class="ornament-line"></div>
+  </div>
+  <span class="flag">🇱🇦</span>
+  <h1>ຫວຍລາວ &middot; ผลหวยลาว</h1>
+  <div class="subtitle">อัพเดทอัตโนมัติทุก 5 นาที &middot; ออกรางวัล จันทร์ พุธ ศุกร์ 20:00 น.</div>
+  <div><span class="live-badge"><span class="live-dot"></span>LIVE</span></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('lao-lottery',this)">🎯 หวยลาวสมาคม</button>
+  <button class="tab" onclick="switchTab('lao-pattana',this)">🌟 หวยลาวพัฒนา</button>
+</div>
+
+<div class="countdown">
+  <span class="cd-label">⏳ นับถอยหลังออกรางวัล</span>
+  <div class="cd-timer">
+    <div class="cd-unit"><span class="cd-num" id="cdH">--</span><div class="cd-lbl">ชั่วโมง</div></div>
+    <span class="cd-sep">:</span>
+    <div class="cd-unit"><span class="cd-num" id="cdM">--</span><div class="cd-lbl">นาที</div></div>
+    <span class="cd-sep">:</span>
+    <div class="cd-unit"><span class="cd-num" id="cdS">--</span><div class="cd-lbl">วินาที</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="draw-label">ผลออกรางวัล</div>
+      <div class="draw-date" id="drawDate">กำลังโหลด...</div>
+      <div class="draw-next" id="drawNext"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <a id="srcLink" href="https://thelotterytoday.com/th/lottery/lao-lottery" target="_blank" class="source-link">📡 ต้นทาง</a>
+      <button class="btn-refresh" onclick="loadData()"><span class="spin">&#8635;</span> รีเฟรช</button>
+    </div>
+  </div>
+  <div id="numbersEl"><div class="loading"><div class="spinner"></div><span>กำลังดึงข้อมูล...</span></div></div>
+</div>
+
+<div class="card">
+  <div class="draw-label" style="font-size:16px;font-weight:700;color:var(--gold-dark);margin-bottom:14px;">🎟️ ตรวจหวย</div>
+  <div class="check-row">
+    <input class="check-input" id="ticketEl" type="tel" placeholder="กรอกเลข 2–6 หลัก" maxlength="10">
+    <button class="check-btn" onclick="checkTicket()">ตรวจสอบ</button>
+  </div>
+  <div class="check-result" id="checkEl"></div>
+</div>
+
+<div class="section-title">ผลย้อนหลัง</div>
+<div class="history-grid" id="historyEl">
+  <div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>
+</div>
+
+<footer>
+  <div class="ornament" style="margin-bottom:14px;">
+    <div class="ornament-line"></div><div class="ornament-dot"></div><div class="ornament-line"></div>
+  </div>
+  ข้อมูลจาก <a href="https://thelotterytoday.com/th/lottery/lao-lottery" target="_blank">thelotterytoday.com</a>
+  &middot; <a href="https://laosassociationlottery.com" target="_blank">laosassociationlottery.com</a><br>
+  ⚠️ กรุณาตรวจสอบผลอย่างเป็นทางการก่อนเคลมรางวัลเสมอ
+</footer>
+
+</div>
+
+<script>
+(function() {
+'use strict';
+
+var CFG = {
+  'lao-lottery': { url:'https://thelotterytoday.com/th/lottery/lao-lottery', days:[1,3,5], hour:20, min:0 },
+  'lao-pattana': { url:'https://thelotterytoday.com/th/lottery/lao-pattana', days:[0,1,2,3,4,5,6], hour:21, min:0 }
+};
+
+var PROXIES = [
+  function(u){ return 'https://api.allorigins.win/get?url=' + encodeURIComponent(u); },
+  function(u){ return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
+  function(u){ return 'https://corsproxy.io/?' + encodeURIComponent(u); }
+];
+
+var ANIMALS = {'ปลาไหล':'🐍','งู':'🐍','นาค':'🐲','ปลา':'🐟','กบ':'🐸','กุ้ง':'🦐','แมว':'🐱','หนู':'🐭','ช้าง':'🐘','วัว':'🐄','ควาย':'🐃','หมู':'🐷','ไก่':'🐓','เป็ด':'🦆','ม้า':'🐎','ลิง':'🐒','เสือ':'🐯','สิงห์':'🦁','หมา':'🐶','กวาง':'🦌','มังกร':'🐲','หงส์':'🦢'};
+
+var currentTab = 'lao-lottery';
+var lastResult = null;
+var autoTimer = null;
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function emojiOf(name){
+  if(!name) return '🎯';
+  for(var k in ANIMALS){ if(name.indexOf(k)>=0) return ANIMALS[k]; }
+  return '🎲';
+}
+
+/* countdown */
+function tick(){
+  try {
+    var cfg = CFG[currentTab];
+    var now = new Date();
+    var utc = now.getTime() + now.getTimezoneOffset()*60000;
+    var vte = new Date(utc + 7*3600000);
+    var next = null;
+    for(var i=0; i<14; i++){
+      var t = new Date(vte.getFullYear(), vte.getMonth(), vte.getDate()+i, cfg.hour, cfg.min, 0);
+      if(cfg.days.indexOf(t.getDay())>=0 && t>vte){ next=t; break; }
+    }
+    if(!next) return;
+    var diff = next - vte;
+    document.getElementById('cdH').textContent = pad2(Math.floor(diff/3600000));
+    document.getElementById('cdM').textContent = pad2(Math.floor((diff%3600000)/60000));
+    document.getElementById('cdS').textContent = pad2(Math.floor((diff%60000)/1000));
+  } catch(e){}
+}
+setInterval(tick, 1000); tick();
+
+/* fetch with proxy fallback */
+async function fetchHTML(url){
+  var lastErr = '';
+  for(var i=0; i<PROXIES.length; i++){
+    try {
+      var purl = PROXIES[i](url);
+      var res = await fetch(purl, {cache:'no-cache'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      var ct = res.headers.get('content-type')||'';
+      var text;
+      if(ct.indexOf('json')>=0){
+        var j = await res.json();
+        text = j.contents || j.body || j.data || JSON.stringify(j);
+      } else {
+        text = await res.text();
+      }
+      if(typeof text==='string' && text.length>200) return text;
+      throw new Error('short response');
+    } catch(e){ lastErr = e.message; }
+  }
+  throw new Error(lastErr || 'all proxies failed');
+}
+
+/* parse result from scraped HTML */
+function parseResult(html){
+  var r = {date:null,last4:null,last3:null,last2:null,dev:null,animal:null,next:null};
+  var m;
+
+  m = html.match(/(?:4\s*ตัวท้าย|Last\s*4\s*Digits)[^0-9]*([0-9]{4})/i); if(m) r.last4=m[1];
+  m = html.match(/(?:3\s*ตัวท้าย|Last\s*3\s*Digits)[^0-9]*([0-9]{3})/i); if(m) r.last3=m[1];
+  m = html.match(/(?:2\s*ตัวท้าย|Last\s*2\s*Digits)[^0-9]*([0-9]{2})/i); if(m) r.last2=m[1];
+  m = html.match(/(?:หวยพัฒนา|Development)[^0-9]*([0-9]{8,10})/i); if(m) r.dev=m[1];
+
+  /* derive 3-digit and 2-digit from 4-digit if missing */
+  if(r.last4 && !r.last3) r.last3 = r.last4.slice(-3);
+  if(r.last4 && !r.last2) r.last2 = r.last4.slice(-2);
+
+  /* animal */
+  var animalKeys = Object.keys(ANIMALS);
+  for(var i=0; i<animalKeys.length; i++){
+    if(html.indexOf(animalKeys[i])>=0){ r.animal=animalKeys[i]; break; }
+  }
+
+  /* date */
+  m = html.match(/([0-9]{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+[0-9]{4})/i);
+  if(m) r.date=m[1];
+
+  /* next draw */
+  m = html.match(/Next draw[^0-9A-Za-z]*([0-9]{1,2}\s+\w+\s+[0-9]{4})/i);
+  if(m) r.next=m[1];
+
+  return r;
+}
+
+function parseHistory(html){
+  var items=[], seen={};
+  var re = /href="([^"]*?([0-9]{4}-[0-9]{2}-[0-9]{2}))[^"]*"/g, m;
+  while((m=re.exec(html))!==null && items.length<12){
+    var ds=m[2]; if(seen[ds]) continue; seen[ds]=1;
+    var d=new Date(ds+'T12:00:00');
+    var label=d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+    var href=m[1].startsWith('http')?m[1]:'https://thelotterytoday.com'+m[1];
+    items.push({date:label,url:href});
+  }
+  return items;
+}
+
+/* render */
+function renderNumbers(r, cfg){
+  if(!r.last4 && !r.last2){
+    return '<div class="error-box">⚠️ ดึงข้อมูลอัตโนมัติไม่ได้<br>'
+      +'<small style="color:var(--muted)">CORS proxy อาจถูก block ชั่วคราว</small><br>'
+      +'<a href="'+cfg.url+'" target="_blank" class="btn-goto">📡 ดูผลที่เว็บต้นทาง →</a></div>';
+  }
+  var em=emojiOf(r.animal);
+  return '<div class="numbers-grid">'
+    +'<div class="num-block featured">'
+    +'<span class="num-label">🏆 เลขออกรางวัลล่าสุด</span>'
+    +'<div class="num-digits">'+(r.last4||'----')+'</div>'
+    +(r.animal?'<div class="animal-row"><span class="animal-emoji">'+em+'</span><span class="animal-name">สัตว์ประจำงวด: '+r.animal+'</span></div>':'')
+    +'</div>'
+    +'<div class="num-block"><span class="num-label">🥇 4 ตัวท้าย</span><div class="num-digits" style="font-size:38px">'+(r.last4||'----')+'</div></div>'
+    +'<div class="num-block"><span class="num-label">🥈 3 ตัวท้าย</span><div class="num-digits" style="font-size:38px">'+(r.last3||'---')+'</div></div>'
+    +'<div class="num-block"><span class="num-label">🥉 2 ตัวท้าย</span><div class="num-digits" style="font-size:38px">'+(r.last2||'--')+'</div></div>'
+    +(r.dev?'<div class="num-block" style="grid-column:1/-1;background:rgba(155,29,29,.07);border-color:rgba(155,29,29,.15)">'
+      +'<span class="num-label" style="color:var(--red)">📋 หวยพัฒนา</span>'
+      +'<div class="num-digits" style="color:var(--red);font-size:22px;letter-spacing:3px">'+r.dev+'</div></div>':'')
+    +'</div>'
+    +'<div class="prize-list">'
+    +'<div class="prize-row"><div class="prize-rank top">4</div><div class="prize-name">4 ตัวท้าย</div><div class="prize-num">'+(r.last4||'----')+'</div></div>'
+    +'<div class="prize-row"><div class="prize-rank">3</div><div class="prize-name">3 ตัวท้าย</div><div class="prize-num">'+(r.last3||'---')+'</div></div>'
+    +'<div class="prize-row"><div class="prize-rank">2</div><div class="prize-name">2 ตัวท้าย</div><div class="prize-num">'+(r.last2||'--')+'</div></div>'
+    +'</div>';
+}
+
+function renderHistory(items, cfg){
+  if(!items.length)
+    return '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:14px">'
+      +'ไม่มีข้อมูลย้อนหลัง — <a href="'+cfg.url+'" target="_blank" style="color:var(--gold-dark);font-weight:600">ดูที่เว็บต้นทาง</a></div>';
+  return items.map(function(it){
+    return '<a href="'+it.url+'" target="_blank" class="hist-card">'
+      +'<div class="hist-date">📅 '+it.date+'</div>'
+      +'<div class="hist-num">'+(it.last4||'----')+'</div>'
+      +'<div class="hist-animal">'+emojiOf(it.animal)+' '+(it.animal||'')+'</div>'
+      +'</a>';
+  }).join('');
+}
+
+/* main load */
+async function loadData(){
+  var cfg = CFG[currentTab];
+  document.getElementById('numbersEl').innerHTML='<div class="loading"><div class="spinner"></div><span>กำลังดึงข้อมูล...</span></div>';
+  document.getElementById('historyEl').innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>';
+  document.getElementById('drawDate').textContent='กำลังโหลด...';
+  document.getElementById('drawNext').textContent='';
+  document.getElementById('checkEl').style.display='none';
+  document.getElementById('srcLink').href=cfg.url;
+
+  try {
+    var html = await fetchHTML(cfg.url);
+    var r = parseResult(html);
+    lastResult = r;
+    document.getElementById('drawDate').textContent = r.date || 'ผลล่าสุด';
+    document.getElementById('drawNext').textContent = r.next ? '🗓 งวดถัดไป: '+r.next : '';
+    document.getElementById('numbersEl').innerHTML = renderNumbers(r, cfg);
+    document.getElementById('historyEl').innerHTML = renderHistory(parseHistory(html), cfg);
+  } catch(err){
+    var cfg2 = CFG[currentTab];
+    document.getElementById('drawDate').textContent='เชื่อมต่อไม่ได้';
+    document.getElementById('numbersEl').innerHTML=
+      '<div class="error-box">⚠️ ไม่สามารถดึงข้อมูลได้<br>'
+      +'<small style="color:var(--muted)">'+err.message+'</small><br>'
+      +'<a href="'+cfg2.url+'" target="_blank" class="btn-goto">📡 ดูผลที่เว็บต้นทาง →</a></div>';
+    document.getElementById('historyEl').innerHTML=renderHistory([], cfg2);
+  }
+}
+
+/* check ticket */
+window.checkTicket = function(){
+  var val = document.getElementById('ticketEl').value.replace(/\D/g,'');
+  var el = document.getElementById('checkEl');
+  if(!val||val.length<2){ el.className='check-result lose'; el.textContent='⚠️ กรุณากรอกเลขอย่างน้อย 2 หลัก'; return; }
+  if(!lastResult){ el.className='check-result lose'; el.textContent='⚠️ ยังไม่มีข้อมูลผล'; return; }
+  var r=lastResult;
+  var prizes=[{label:'4 ตัวท้าย',val:r.last4},{label:'3 ตัวท้าย',val:r.last3},{label:'2 ตัวท้าย',val:r.last2}];
+  var hit=null;
+  for(var i=0;i<prizes.length;i++){
+    var p=prizes[i];
+    if(p.val && val.length===p.val.length && val===p.val){hit=p;break;}
+    if(p.val && p.val.endsWith(val) && val.length<=p.val.length){hit=p;break;}
+  }
+  if(hit){
+    el.className='check-result win';
+    el.innerHTML='🎉 ยินดีด้วย! ถูก<strong>'+hit.label+'</strong> — เลข '+val+' ตรงกับ '+hit.val+'<br><small>กรุณาตรวจสอบกับทางการอีกครั้ง</small>';
+  } else {
+    el.className='check-result lose';
+    el.innerHTML='❌ เลข <strong>'+val+'</strong> ไม่ตรงกับผลออกรางวัลงวดนี้';
+  }
+};
+
+/* tab switch */
+window.switchTab = function(key, btn){
+  currentTab=key; lastResult=null;
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('checkEl').style.display='none';
+  document.getElementById('ticketEl').value='';
+  loadData();
+};
+
+/* enter key */
+document.getElementById('ticketEl').addEventListener('keydown',function(e){if(e.key==='Enter')window.checkTicket();});
+
+/* auto refresh */
+window.loadData = loadData;
+if(autoTimer) clearInterval(autoTimer);
+autoTimer = setInterval(loadData, 5*60*1000);
+
+/* init */
+loadData();
+
+})();
+</script>
+</body>
+</html>
